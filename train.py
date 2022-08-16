@@ -47,8 +47,10 @@ def generate_arrays_from_file(images, labels, batch_size):
         X_train = []
         Y_train = []
         for _ in range(batch_size):
-            image = Image.open(images[i])
+            image = Image.open(images[i]).convert("RGB")
+            image = np.array(image)
             label = Image.open(labels[i]).convert("RGB")
+            label = np.array(label)
             image , label = voc_rand_crop(image, label,crop_size[0],crop_size[1])
             label = image2label(label) 
             one_hot_label = np.eye(num_classes)[np.array(label, np.int32)]
@@ -70,7 +72,7 @@ if __name__ == "__main__":
     checkpoint = ModelCheckpoint(weigth_dir + 'ep{epoch:03d}-loss{loss:.3f}-val_loss{val_loss:.3f}.h5',
                             monitor='val_loss', save_weights_only=True, save_best_only=False, period=2)
     reduce_lr = ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=3, verbose=1)
-    early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=50, verbose=1)
+    early_stopping = EarlyStopping(monitor='val_loss', min_delta=0, patience=10, verbose=1)
 
     # 超参数设置
     lr = 1e-3
@@ -95,7 +97,7 @@ if __name__ == "__main__":
     print('Train on {} samples, val on {} samples, with batch size {}.'.format(num_train, num_val, batch_size))
 
 
-    model.fit_generator(generate_arrays_from_file(train_data, train_label, batch_size),
+    model.fit(generate_arrays_from_file(train_data, train_label, batch_size),
                 steps_per_epoch=max(1, num_train//batch_size),
                 validation_data=generate_arrays_from_file(val_data, val_label, batch_size),
                 validation_steps=max(1, num_val//batch_size),

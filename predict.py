@@ -4,15 +4,20 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 from nets.deeplab import Deeplabv3 
+from utils.dataloader import colormap
 
-
-input_shape = (2048, 4000, 3)
-num_classes = 6
+input_shape = (320, 480, 3) # 改
+num_classes = 21  # 改
 model = Deeplabv3(classes=num_classes,input_shape=input_shape)
-model.load_weights("weight/last1.h5")
+model.load_weights("weight/last.h5")
+
 
 # RGB color for each class
-VOC_COLORMAP = [[0,0,0],[0,0,128],[0,128,0],[128,0,0], [128,0,128], [128,0,0]]
+VOC_COLORMAP = [[0,0,0],[128,0,0],[0,128,0], [128,128,0], [0,0,128],
+            [128,0,128],[0,128,128],[128,128,128],[64,0,0],[192,0,0],
+            [64,128,0],[192,128,0],[64,0,128],[192,0,128],
+            [64,128,128],[192,128,128],[0,64,0],[128,64,0],
+            [0,192,0],[128,192,0],[0,64,128]]
 
 def predict(img):
     rgb_mean = np.array([0.485, 0.456, 0.406])
@@ -31,12 +36,14 @@ def label2image(pred):
 
 
 root="dataset/MyDataset"
-fname="DJI_0001"
+fname="2007_000175"
 image = Image.open('%s/JPEGImages/%s.jpg' % (root, fname)).convert("RGB")
 label = Image.open('%s/SegmentationClass/%s.png' % (root, fname)).convert("RGB")
+image = np.array(image)
+label = np.array(label)
 
-label = tf.image.resize_with_crop_or_pad(label,2048, 4000)
-image = tf.image.resize_with_crop_or_pad(image,2048, 4000)
+label = tf.image.resize_with_crop_or_pad(label,input_shape[0], input_shape[1])
+image = tf.image.resize_with_crop_or_pad(image,input_shape[0], input_shape[1])
 
 pred = predict(image)
 pred = label2image(pred)
